@@ -1,0 +1,44 @@
+{
+  "types": {
+    "desk_top": {
+      "label": "Desk top"
+    },
+    "monitor": {
+      "label": "Monitor"
+    }
+  },
+  "products": [
+    {
+      "sku": "DESK-TOP-1400",
+      "type": "desk_top",
+      "name": "Desk top 1400x700",
+      "dimensions": {
+        "width": 1400,
+        "depth": 700,
+        "height": 30
+      },
+      "priceEur": 189.0,
+      "media": {
+        "model3d": ""
+      }
+    },
+    {
+      "sku": "MON-613-366",
+      "type": "monitor",
+      "name": "Monitor 27-inch",
+      "dimensions": {
+        "width": 613,
+        "depth": 205,
+        "height": 366
+      },
+      "priceEur": 249.0,
+      "media": {
+        "model3d": ""
+      }
+    }
+  ],
+  "ergonomics": {
+    "eyeHeightSitting": 0.79,
+    "elbowHeightSitting": 0.42
+  }
+}

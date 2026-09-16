@@ -1,0 +1,25 @@
+{
+  "name": "deskos",
+  "version": "0.1.0",
+  "description": "deskOS - AI workspace configurator skeleton",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev:server": "nodemon server/server.js",
+    "dev:client": "vite --config client/vite.config.js"
+  },
+  "dependencies": {
+    "@aws-sdk/client-s3": "^3.658.0",
+    "@aws-sdk/s3-request-presigner": "^3.658.0",
+    "@dimforge/rapier3d-compat": "^0.14.0",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.5",
+    "express": "^4.19.2",
+    "multer": "^2.4.0",
+    "three": "^0.169.0"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.4",
+    "vite": "^5.4.6"
+  }
+}
