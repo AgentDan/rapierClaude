@@ -1,9 +1,5 @@
 import { get } from "./registry.js";
-
-function getHalfExtents(rigidBody) {
-  const collider = rigidBody.collider(0);
-  return collider.shape.halfExtents;
-}
+import { getHalfExtents } from "./bodies.js";
 
 // Keeps an object's X/Z position within the bounds of its host (e.g. a
 // monitor staying on top of a desk), reading the host's position and

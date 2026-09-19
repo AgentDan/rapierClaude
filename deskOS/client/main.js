@@ -1,15 +1,19 @@
 import * as THREE from "three";
 import { initScene } from "./renderer/scene.js";
-import { RAPIER, initWorld, getWorld, step } from "./physics/world.js";
-import { createBodyFromCatalogItem, mmToM } from "./physics/bodies.js";
-import { register, all } from "./physics/registry.js";
+import { RAPIER, initWorld, step } from "./physics/world.js";
+import { createBodyFromCatalogItem, mmToM, getHalfExtents } from "./physics/bodies.js";
+import { register, get, all } from "./physics/registry.js";
 import { enforceHostConstraint } from "./physics/host-constraint.js";
 import { syncMeshes } from "./physics/sync.js";
 import { initDragControls } from "./interaction/drag-controls.js";
 
-const DESK_COLOR = 0x8a6d4b;
-const MONITOR_COLOR = 0x222222;
+const TYPE_COLORS = {
+  desk_top: 0x8a6d4b,
+  monitor: 0x222222
+};
+const DEFAULT_COLOR = 0x888888;
 const FLOOR_THICKNESS_M = 0.05;
+const DROP_CLEARANCE_M = 0.3;
 
 function boxMesh(dimensions, color) {
   const geometry = new THREE.BoxGeometry(
@@ -31,6 +35,61 @@ function createFloor(world) {
   return { rigidBody, halfExtents };
 }
 
+function hostTopY(host) {
+  const half = getHalfExtents(host.rigidBody);
+  return host.rigidBody.translation().y + half.y;
+}
+
+function meshColorForType(type) {
+  return TYPE_COLORS[type] ?? DEFAULT_COLOR;
+}
+
+function placeProducts(scene, products) {
+  const queue = [...products];
+
+  while (queue.length > 0) {
+    const remaining = [];
+    let placedThisPass = 0;
+
+    for (const product of queue) {
+      const hostSku = product.placement?.hostSku ?? null;
+      const hostId = hostSku ?? "floor";
+      const host = get(hostId);
+
+      if (!host) {
+        remaining.push(product);
+        continue;
+      }
+
+      const isAnchored = hostSku == null;
+      const productHalfHeight = mmToM(product.dimensions.height) / 2;
+      const y = isAnchored
+        ? hostTopY(host) + productHalfHeight
+        : hostTopY(host) + productHalfHeight + DROP_CLEARANCE_M;
+
+      const { rigidBody } = createBodyFromCatalogItem(product, {
+        position: { x: 0, y, z: 0 },
+        fixed: isAnchored
+      });
+      const mesh = boxMesh(product.dimensions, meshColorForType(product.type));
+      scene.add(mesh);
+      register(product.sku, { mesh, rigidBody, hostId });
+      placedThisPass += 1;
+    }
+
+    if (placedThisPass === 0) {
+      const leftover = remaining.map((p) => p.sku).join(", ");
+      console.error(
+        `Could not place products; host is missing or cyclic: ${leftover}`
+      );
+      break;
+    }
+
+    queue.length = 0;
+    queue.push(...remaining);
+  }
+}
+
 async function main() {
   const catalog = await fetch("/api/catalog").then((res) => res.json());
 
@@ -48,32 +107,7 @@ async function main() {
   });
 
   createFloor(world);
-
-  const deskItem = catalog.products.find((p) => p.type === "desk_top");
-  const monitorItem = catalog.products.find((p) => p.type === "monitor");
-
-  // Desk rests directly on top of the floor.
-  const deskHalfHeight = mmToM(deskItem.dimensions.height) / 2;
-  const deskY = deskHalfHeight; // floor top is at y = 0
-  const { rigidBody: deskBody, halfExtents: deskHalf } = createBodyFromCatalogItem(deskItem, {
-    position: { x: 0, y: deskY, z: 0 },
-    fixed: true
-  });
-  const deskMesh = boxMesh(deskItem.dimensions, DESK_COLOR);
-  scene.add(deskMesh);
-  register("desk", { mesh: deskMesh, rigidBody: deskBody, hostId: "floor" });
-
-  // Monitor spawns above the desk and falls onto it under gravity;
-  // enforceHostConstraint() then keeps it from sliding off the edges.
-  const deskTopY = deskY + deskHalf.y;
-  const monitorHalfHeight = mmToM(monitorItem.dimensions.height) / 2;
-  const { rigidBody: monitorBody } = createBodyFromCatalogItem(monitorItem, {
-    position: { x: 0, y: deskTopY + monitorHalfHeight + 0.3, z: 0 },
-    fixed: false
-  });
-  const monitorMesh = boxMesh(monitorItem.dimensions, MONITOR_COLOR);
-  scene.add(monitorMesh);
-  register("monitor", { mesh: monitorMesh, rigidBody: monitorBody, hostId: "desk" });
+  placeProducts(scene, catalog.products);
 
   initDragControls({ camera, canvas, controls });
 }

@@ -32,6 +32,9 @@
         "height": 366
       },
       "priceEur": 249.0,
+      "placement": {
+        "hostSku": "DESK-TOP-1400"
+      },
       "media": {
         "model3d": ""
       }

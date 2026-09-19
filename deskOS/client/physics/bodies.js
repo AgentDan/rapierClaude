@@ -29,4 +29,8 @@ function createBodyFromCatalogItem(item, { position = { x: 0, y: 0, z: 0 }, fixe
   return { rigidBody, halfExtents };
 }
 
-export { createBodyFromCatalogItem, mmToM };
+function getHalfExtents(rigidBody) {
+  return rigidBody.collider(0).shape.halfExtents;
+}
+
+export { createBodyFromCatalogItem, mmToM, getHalfExtents };
