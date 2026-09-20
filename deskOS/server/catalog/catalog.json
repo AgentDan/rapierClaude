@@ -39,9 +39,5 @@
         "model3d": ""
       }
     }
-  ],
-  "ergonomics": {
-    "eyeHeightSitting": 0.79,
-    "elbowHeightSitting": 0.42
-  }
+  ]
 }

@@ -16,7 +16,7 @@ deskOS/
 ├── server/
 │   ├── api/routes.js
 │   ├── catalog/catalog.json
-│   ├── catalog-engine/{graph.js, validate.js}
+│   ├── catalog-engine/validate.js
 │   ├── storage/client.js
 │   └── server.js
 ├── client/

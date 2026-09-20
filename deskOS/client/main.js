@@ -32,7 +32,6 @@ function createFloor(world) {
   const colliderDesc = RAPIER.ColliderDesc.cuboid(halfExtents.x, halfExtents.y, halfExtents.z);
   world.createCollider(colliderDesc, rigidBody);
   register("floor", { mesh: null, rigidBody, hostId: null });
-  return { rigidBody, halfExtents };
 }
 
 function hostTopY(host) {

@@ -1,4 +1,4 @@
-import { S3Client, PutObjectCommand, HeadObjectCommand } from "@aws-sdk/client-s3";
+import { S3Client, PutObjectCommand } from "@aws-sdk/client-s3";
 
 const S3_ENDPOINT = process.env.S3_ENDPOINT || "http://localhost:9000";
 const S3_BUCKET = process.env.S3_BUCKET || "deskos-media";
@@ -33,16 +33,4 @@ function getPublicUrl(key) {
   return `${S3_PUBLIC_BASE_URL}/${key}`;
 }
 
-async function fileExists(key) {
-  try {
-    await s3.send(new HeadObjectCommand({ Bucket: S3_BUCKET, Key: key }));
-    return true;
-  } catch (err) {
-    if (err.$metadata && err.$metadata.httpStatusCode === 404) {
-      return false;
-    }
-    throw err;
-  }
-}
-
-export { s3, uploadFile, getPublicUrl, fileExists, S3_BUCKET };
+export { uploadFile };
