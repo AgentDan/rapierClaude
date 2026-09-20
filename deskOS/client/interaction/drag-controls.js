@@ -1,6 +1,6 @@
 import * as THREE from "three";
 import { all, get } from "../physics/registry.js";
-import { enforceHostConstraint } from "../physics/host-constraint.js";
+import { isRestingOn } from "../physics/bodies.js";
 
 // Lets the user drag any registered object (desk, monitor, ...) across a
 // horizontal plane at its own height with the mouse/pointer. OrbitControls
@@ -14,6 +14,7 @@ function initDragControls({ camera, canvas, controls }) {
   const UP = new THREE.Vector3(0, 1, 0);
 
   let draggedId = null;
+  let carriedIds = [];
   let draggedY = 0;
   let lastX = 0;
   let lastZ = 0;
@@ -27,10 +28,12 @@ function initDragControls({ camera, canvas, controls }) {
   function draggableMeshes() {
     const meshes = [];
     for (const [id, entry] of all()) {
-      if (entry.mesh) {
-        entry.mesh.userData.dragId = id;
-        meshes.push(entry.mesh);
-      }
+      if (!entry.mesh) continue;
+      entry.mesh.traverse((obj) => {
+        if (!obj.isMesh) return;
+        obj.userData.dragId = id;
+        meshes.push(obj);
+      });
     }
     return meshes;
   }
@@ -39,6 +42,34 @@ function initDragControls({ camera, canvas, controls }) {
     if (rigidBody.isDynamic && rigidBody.isDynamic()) {
       rigidBody.setLinvel({ x: 0, y: 0, z: 0 }, true);
       rigidBody.setAngvel({ x: 0, y: 0, z: 0 }, true);
+    }
+  }
+
+  function collectRestingStack(supportId, acc = []) {
+    const support = get(supportId);
+    if (!support) return acc;
+
+    for (const [id, entry] of all()) {
+      if (id === supportId || id === "floor" || acc.includes(id) || !entry.rigidBody) continue;
+      if (entry.rigidBody.isFixed && entry.rigidBody.isFixed()) continue;
+      if (!isRestingOn(entry.rigidBody, support.rigidBody)) continue;
+      acc.push(id);
+      collectRestingStack(id, acc);
+    }
+
+    return acc;
+  }
+
+  function shiftCarried(dx, dz) {
+    for (const id of carriedIds) {
+      const child = get(id);
+      if (!child) continue;
+      const childPos = child.rigidBody.translation();
+      child.rigidBody.setTranslation(
+        { x: childPos.x + dx, y: childPos.y, z: childPos.z + dz },
+        true
+      );
+      zeroVelocity(child.rigidBody);
     }
   }
 
@@ -55,6 +86,7 @@ function initDragControls({ camera, canvas, controls }) {
 
     const pos = entry.rigidBody.translation();
     draggedId = id;
+    carriedIds = collectRestingStack(id);
     draggedY = pos.y;
     lastX = pos.x;
     lastZ = pos.z;
@@ -87,25 +119,12 @@ function initDragControls({ camera, canvas, controls }) {
 
     entry.rigidBody.setTranslation({ x: targetX, y: draggedY, z: targetZ }, true);
     zeroVelocity(entry.rigidBody);
-    enforceHostConstraint(draggedId); // may clamp the target (e.g. against the host's edge)
 
-    // Use the actual post-clamp position so children move exactly as far as
-    // the dragged object really did - not the (possibly further) raw target.
     const actual = entry.rigidBody.translation();
     const dx = actual.x - lastX;
     const dz = actual.z - lastZ;
 
-    // Carry along anything resting on the dragged object, keeping its
-    // position relative to the host unchanged (e.g. the monitor on the desk).
-    for (const [id, child] of all()) {
-      if (child.hostId !== draggedId) continue;
-      const childPos = child.rigidBody.translation();
-      child.rigidBody.setTranslation(
-        { x: childPos.x + dx, y: childPos.y, z: childPos.z + dz },
-        true
-      );
-      zeroVelocity(child.rigidBody);
-    }
+    shiftCarried(dx, dz);
 
     lastX = actual.x;
     lastZ = actual.z;
@@ -114,6 +133,7 @@ function initDragControls({ camera, canvas, controls }) {
   function endDrag(event) {
     if (!draggedId) return;
     draggedId = null;
+    carriedIds = [];
     if (controls) controls.enabled = true;
     canvas.style.cursor = "auto";
     if (event) canvas.releasePointerCapture(event.pointerId);

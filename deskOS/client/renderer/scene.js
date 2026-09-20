@@ -11,14 +11,14 @@ function initScene(canvas, { onFrame } = {}) {
     0.01,
     100
   );
-  camera.position.set(1.8, 1.4, 1.8);
+  camera.position.set(1.8, 2.2, 1.8);
 
   const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
   renderer.setSize(window.innerWidth, window.innerHeight);
   renderer.setPixelRatio(window.devicePixelRatio);
 
   const controls = new OrbitControls(camera, renderer.domElement);
-  controls.target.set(0, 0.4, 0);
+  controls.target.set(0, 1.0, 0);
   controls.enableDamping = true;
 
   const hemiLight = new THREE.HemisphereLight(0xffffff, 0x444444, 1.2);
@@ -39,7 +39,7 @@ function initScene(canvas, { onFrame } = {}) {
 
   function tick() {
     requestAnimationFrame(tick);
-    controls.update();
+    controls.update(); //для orbit controls
     if (onFrame) onFrame();
     renderer.render(scene, camera);
   }
