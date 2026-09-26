@@ -283,6 +283,10 @@ function validateCatalogDraft(catalog, errors) {
         typeIds.add(type.id);
       }
 
+      if (isMissing(type, "label")) {
+        errors.push(`catalog: type "${label}" is missing required field "label"`);
+      }
+
       if (!type || typeof type.canBeHost !== "boolean") {
         errors.push(`catalog: type "${label}" is missing required field "canBeHost"`);
       }
@@ -291,16 +295,44 @@ function validateCatalogDraft(catalog, errors) {
         errors.push(`catalog: type "${label}" is missing required field "maxOnScene"`);
       }
     }
+
+    for (const type of types) {
+      if (!type || !Array.isArray(type.canHostOn)) continue;
+      const label = type.id ? type.id : "<unknown type>";
+      for (const hostTypeId of type.canHostOn) {
+        if (!typeIds.has(hostTypeId)) {
+          errors.push(
+            `catalog: type "${label}" canHostOn references unknown type "${hostTypeId}"`
+          );
+        }
+      }
+    }
   }
 
+  const seenSkus = new Set();
+  const hostBySku = new Map();
+
   if (products) {
-    const seenSkus = new Set();
     for (const product of products) {
       const label = product && product.sku ? product.sku : "<unknown sku>";
 
-      for (const field of ["sku", "type", "widthMm", "priceEur"]) {
+      for (const field of ["sku", "type", "priceEur"]) {
         if (isMissing(product, field)) {
           errors.push(`catalog: product "${label}" is missing required field "${field}"`);
+        }
+      }
+
+      const dimensions = product && product.dimensions;
+      if (!dimensions || typeof dimensions !== "object") {
+        errors.push(`catalog: product "${label}" is missing required field "dimensions"`);
+      } else {
+        for (const dim of ["width", "depth", "height"]) {
+          const value = dimensions[dim];
+          if (typeof value !== "number" || !(value > 0)) {
+            errors.push(
+              `catalog: product "${label}" dimensions.${dim} must be a positive number`
+            );
+          }
         }
       }
 
@@ -313,6 +345,51 @@ function validateCatalogDraft(catalog, errors) {
 
       if (product && product.type && typeIds.size > 0 && !typeIds.has(product.type)) {
         errors.push(`catalog: product "${label}" references unknown type "${product.type}"`);
+      }
+
+      const model3d = product && product.media && product.media.model3d;
+      if (model3d !== undefined && model3d !== null && model3d !== "") {
+        if (typeof model3d !== "string" || !model3d.startsWith("/")) {
+          errors.push(
+            `catalog: product "${label}" media.model3d must be a string starting with "/"`
+          );
+        }
+      }
+    }
+
+    for (const product of products) {
+      const hostSku = product && product.placement && product.placement.hostSku;
+      if (!hostSku) continue;
+
+      const label = product.sku ? product.sku : "<unknown sku>";
+
+      if (hostSku === product.sku) {
+        errors.push(`catalog: product "${label}" placement.hostSku refers to itself`);
+        continue;
+      }
+
+      if (!seenSkus.has(hostSku)) {
+        errors.push(
+          `catalog: product "${label}" placement.hostSku "${hostSku}" does not exist in catalog`
+        );
+        continue;
+      }
+
+      if (product.sku) {
+        hostBySku.set(product.sku, hostSku);
+      }
+    }
+
+    for (const sku of hostBySku.keys()) {
+      const visited = new Set();
+      let current = sku;
+      while (current && hostBySku.has(current)) {
+        if (visited.has(current)) {
+          errors.push(`catalog: circular placement chain detected involving "${sku}"`);
+          break;
+        }
+        visited.add(current);
+        current = hostBySku.get(current);
       }
     }
   }

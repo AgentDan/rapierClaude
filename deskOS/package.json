@@ -6,7 +6,7 @@
   "type": "module",
   "scripts": {
     "dev": "concurrently -n server,client -c cyan,magenta \"npm run dev:server\" \"npm run dev:client\"",
-    "dev:server": "nodemon server/server.js",
+    "dev:server": "nodemon backend/server.js",
     "dev:client": "vite --config client/vite.config.js",
     "test": "node --test backend/dialog/validate-dialog-data.test.js"
   },
