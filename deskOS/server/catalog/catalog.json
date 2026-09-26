@@ -6,6 +6,9 @@
     "desk_top": {
       "label": "Desk top"
     },
+    "chair": {
+      "label": "Chair"
+    },
     "monitor": {
       "label": "Monitor"
     }
@@ -32,6 +35,9 @@
         "height": 30
       },
       "priceEur": 189.0,
+      "media": {
+        "model3d": "/models/desk.glb"
+      },
       "placement": {
         "hostSku": "DESK-LEGS-1400"
       }
@@ -48,6 +54,23 @@
       "priceEur": 249.0,
       "placement": {
         "hostSku": "DESK-TOP-1400"
+      }
+    },
+    {
+      "sku": "CHAIR-460",
+      "type": "chair",
+      "name": "Chair 460x520",
+      "dimensions": {
+        "width": 460,
+        "depth": 520,
+        "height": 900
+      },
+      "priceEur": 129.0,
+      "placement": {
+        "offset": {
+          "x": 0,
+          "z": 760
+        }
       }
     }
   ]

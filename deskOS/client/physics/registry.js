@@ -1,5 +1,5 @@
 // Central lookup for every physics-backed object in the scene.
-// id -> { mesh, rigidBody, hostId }
+// id -> { mesh, rigidBody }
 const registry = new Map();
 
 function register(id, entry) {

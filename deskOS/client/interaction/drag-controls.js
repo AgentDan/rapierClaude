@@ -51,7 +51,6 @@ function initDragControls({ camera, canvas, controls }) {
 
     for (const [id, entry] of all()) {
       if (id === supportId || id === "floor" || acc.includes(id) || !entry.rigidBody) continue;
-      if (entry.rigidBody.isFixed && entry.rigidBody.isFixed()) continue;
       if (!isRestingOn(entry.rigidBody, support.rigidBody)) continue;
       acc.push(id);
       collectRestingStack(id, acc);

@@ -1,0 +1,18 @@
+{
+  "section": "catalog",
+  "draftVersion": 1,
+  "publishedVersion": 1,
+  "draft": {
+    "types": [
+      { "id": "desk_top", "canBeHost": true, "canHostOn": [], "maxOnScene": 1 },
+      { "id": "monitor", "canBeHost": false, "canHostOn": ["desk_top"], "maxOnScene": 3 },
+      { "id": "chair", "canBeHost": false, "canHostOn": [], "maxOnScene": 2 }
+    ],
+    "products": [
+      { "sku": "DSK-140", "type": "desk_top", "widthMm": 1400, "priceEur": 219 },
+      { "sku": "MON-27", "type": "monitor", "widthMm": 613, "priceEur": 189 },
+      { "sku": "CHR-460", "type": "chair", "widthMm": 460, "priceEur": 129 }
+    ]
+  },
+  "history": []
+}

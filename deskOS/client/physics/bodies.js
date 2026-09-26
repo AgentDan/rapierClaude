@@ -50,11 +50,73 @@ function deskFrameParts(dimensions) {
   return parts;
 }
 
-function colliderPartsForItem(item) {
-  if (item.type === "desk_legs") {
-    return deskFrameParts(item.dimensions);
+function chairParts(dimensions) {
+  const w = mmToM(dimensions.width);
+  const d = mmToM(dimensions.depth);
+  const h = mmToM(dimensions.height);
+  const leg = mmToM(35);
+  const seatT = mmToM(40);
+  const backT = mmToM(22);
+  const rail = mmToM(28);
+  const inset = mmToM(12);
+  const hy = h / 2;
+  const parts = [];
+
+  const seatTopFromFloor = Math.min(mmToM(450), h - mmToM(350));
+  const seatTop = -hy + seatTopFromFloor;
+  const seatY = seatTop - seatT / 2;
+  const backH = h - seatTopFromFloor;
+  const seatHalfX = w / 2 - inset * 0.25;
+  const seatHalfZ = (d - backT) / 2;
+
+  parts.push({
+    half: { x: seatHalfX, y: seatT / 2, z: seatHalfZ },
+    local: { x: 0, y: seatY, z: -backT / 2 }
+  });
+
+  parts.push({
+    half: { x: seatHalfX, y: backH / 2, z: backT / 2 },
+    local: { x: 0, y: seatTop + backH / 2, z: d / 2 - backT / 2 }
+  });
+
+  const legH = seatTopFromFloor - seatT;
+  const legY = -hy + legH / 2;
+  const x = w / 2 - inset - leg / 2;
+  const zFront = -d / 2 + inset + leg / 2;
+  const zBack = d / 2 - backT - inset - leg / 2;
+
+  for (const sx of [-1, 1]) {
+    for (const z of [zFront, zBack]) {
+      parts.push({
+        half: { x: leg / 2, y: legH / 2, z: leg / 2 },
+        local: { x: sx * x, y: legY, z }
+      });
+    }
   }
 
+  const railY = seatY - seatT / 2 - rail / 2;
+  for (const z of [zFront, zBack]) {
+    parts.push({
+      half: { x, y: rail / 2, z: rail / 2 },
+      local: { x: 0, y: railY, z }
+    });
+  }
+
+  const zMid = (zFront + zBack) / 2;
+  const zSpan = Math.abs(zBack - zFront) / 2;
+  for (const sx of [-1, 1]) {
+    parts.push({
+      half: { x: rail / 2, y: rail / 2, z: zSpan },
+      local: { x: sx * x, y: railY, z: zMid }
+    });
+  }
+
+  return parts;
+}
+
+function framePartsForItem(item) {
+  if (item.type === "desk_legs") return deskFrameParts(item.dimensions);
+  if (item.type === "chair") return chairParts(item.dimensions);
   return [
     {
       half: {
@@ -67,12 +129,14 @@ function colliderPartsForItem(item) {
   ];
 }
 
-function createBodyFromCatalogItem(item, { position = { x: 0, y: 0, z: 0 }, fixed = false } = {}) {
+function colliderPartsForItem(item) {
+  return framePartsForItem(item);
+}
+
+function createBodyFromCatalogItem(item, { position = { x: 0, y: 0, z: 0 } } = {}) {
   const world = getWorld();
 
-  const bodyDesc = fixed
-    ? RAPIER.RigidBodyDesc.fixed()
-    : RAPIER.RigidBodyDesc.dynamic();
+  const bodyDesc = RAPIER.RigidBodyDesc.dynamic();
   bodyDesc.setTranslation(position.x, position.y, position.z);
 
   const rigidBody = world.createRigidBody(bodyDesc);
@@ -187,4 +251,4 @@ function isRestingOn(upperBody, lowerBody) {
   return false;
 }
 
-export { createBodyFromCatalogItem, mmToM, deskFrameParts, getWorldTopY, isRestingOn };
+export { createBodyFromCatalogItem, mmToM, framePartsForItem, getWorldTopY, isRestingOn };
