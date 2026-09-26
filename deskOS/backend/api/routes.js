@@ -2,6 +2,7 @@ import { Router } from "express";
 import { readCatalog, readQuestionnaire } from "../config/load.js";
 import { loadProfile, saveProfile } from "../dialog/profile-store.js";
 import { getNextQuestion } from "../dialog/engine/question-engine.js";
+import { computeNeeds } from "../dialog/engine/inference-engine.js";
 
 const router = Router();
 
@@ -48,8 +49,18 @@ router.post("/dialog/answer", (req, res) => {
     source: "stated",
     confidence: "high"
   };
+  profile.needs = computeNeeds(questionnaire, profile);
   saveProfile(profile);
   res.json({ ok: true });
+});
+
+router.get("/dialog/profile", (req, res) => {
+  const clientId = req.query.clientId;
+  if (!isSafeClientId(clientId)) {
+    return res.status(400).json({ error: "invalid clientId" });
+  }
+
+  res.json(loadProfile(clientId));
 });
 
 export default router;
