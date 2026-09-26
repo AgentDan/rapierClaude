@@ -6,6 +6,7 @@ import { register, get } from "./physics/registry.js";
 import { syncMeshes } from "./physics/sync.js";
 import { initDragControls } from "./interaction/drag-controls.js";
 import { loadCatalogModel } from "./renderer/load-model.js";
+import { mountQuestionPanel } from "./dialog-ui/question-buttons.js";
 
 const TYPE_COLORS = {
   desk_legs: 0x5c4033,
@@ -117,6 +118,9 @@ function placeProducts(scene, products) {
 
 async function main() {
   const catalog = await fetch("/api/catalog").then((res) => res.json());
+
+  // TODO: заменить на настоящий clientId, когда появятся сессии — Этап 10
+  mountQuestionPanel(document.getElementById("question-panel"), "local-test-client");
 
   const canvas = document.getElementById("scene-canvas");
   const world = await initWorld();
