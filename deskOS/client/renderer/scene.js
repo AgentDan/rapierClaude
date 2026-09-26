@@ -45,7 +45,7 @@ function initScene(canvas, { onFrame } = {}) {
   }
   requestAnimationFrame(tick);
 
-  return { scene, camera, renderer, controls };
+  return { scene, camera, controls };
 }
 
 export { initScene };

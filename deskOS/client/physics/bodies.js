@@ -129,10 +129,6 @@ function framePartsForItem(item) {
   ];
 }
 
-function colliderPartsForItem(item) {
-  return framePartsForItem(item);
-}
-
 function createBodyFromCatalogItem(item, { position = { x: 0, y: 0, z: 0 } } = {}) {
   const world = getWorld();
 
@@ -141,7 +137,7 @@ function createBodyFromCatalogItem(item, { position = { x: 0, y: 0, z: 0 } } = {
 
   const rigidBody = world.createRigidBody(bodyDesc);
 
-  for (const part of colliderPartsForItem(item)) {
+  for (const part of framePartsForItem(item)) {
     const colliderDesc = RAPIER.ColliderDesc.cuboid(part.half.x, part.half.y, part.half.z);
     colliderDesc.setTranslation(part.local.x, part.local.y, part.local.z);
     world.createCollider(colliderDesc, rigidBody);

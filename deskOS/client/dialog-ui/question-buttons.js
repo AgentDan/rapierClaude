@@ -2,7 +2,6 @@ function optionButton(option) {
   const button = document.createElement("button");
   button.type = "button";
   button.textContent = option.label;
-  button.dataset.optionId = option.id;
   return button;
 }
 
