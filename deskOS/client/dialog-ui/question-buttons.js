@@ -32,6 +32,7 @@ async function fetchNext(clientId) {
 }
 
 async function postAnswer(clientId, questionId, optionId) {
+  
   const res = await fetch("/api/dialog/answer", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
