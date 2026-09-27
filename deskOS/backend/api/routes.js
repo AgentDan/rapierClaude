@@ -3,6 +3,7 @@ import { readCatalog, readQuestionnaire } from "../config/load.js";
 import { loadProfile, saveProfile } from "../dialog/profile-store.js";
 import { getNextQuestion } from "../dialog/engine/question-engine.js";
 import { computeNeeds } from "../dialog/engine/inference-engine.js";
+import { runMatching } from "../dialog/engine/matching.js";
 
 const router = Router();
 
@@ -50,6 +51,7 @@ router.post("/dialog/answer", (req, res) => {
     confidence: "high"
   };
   profile.needs = computeNeeds(questionnaire, profile);
+  profile.needs = runMatching(readCatalog(), profile.needs);
   saveProfile(profile);
   res.json({ ok: true });
 });
