@@ -4,6 +4,7 @@ import { loadProfile, saveProfile } from "../dialog/profile-store.js";
 import { getNextQuestion } from "../dialog/engine/question-engine.js";
 import { computeNeeds } from "../dialog/engine/inference-engine.js";
 import { runMatching } from "../dialog/engine/matching.js";
+import { computeScenePlan } from "../dialog/engine/scene-plan.js";
 
 const router = Router();
 
@@ -54,6 +55,16 @@ router.post("/dialog/answer", (req, res) => {
   profile.needs = runMatching(readCatalog(), profile.needs);
   saveProfile(profile);
   res.json({ ok: true });
+});
+
+router.get("/dialog/scene", (req, res) => {
+  const clientId = req.query.clientId;
+  if (!isSafeClientId(clientId)) {
+    return res.status(400).json({ error: "invalid clientId" });
+  }
+
+  const profile = loadProfile(clientId);
+  res.json({ skus: computeScenePlan(readCatalog(), profile) });
 });
 
 router.get("/dialog/profile", (req, res) => {

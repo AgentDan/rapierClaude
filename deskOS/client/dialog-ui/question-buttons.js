@@ -42,7 +42,7 @@ async function postAnswer(clientId, questionId, optionId) {
   return res.json();
 }
 
-function mountQuestionPanel(containerEl, clientId) {
+function mountQuestionPanel(containerEl, clientId, onAnswered) {
   if (!containerEl) return;
 
   async function showNext() {
@@ -54,6 +54,7 @@ function mountQuestionPanel(containerEl, clientId) {
 
     renderQuestion(containerEl, data.question, async (optionId) => {
       await postAnswer(clientId, data.question.id, optionId);
+      if (typeof onAnswered === "function") await onAnswered();
       await showNext();
     });
   }

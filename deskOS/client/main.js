@@ -118,9 +118,19 @@ function placeProducts(scene, products) {
 
 async function main() {
   const catalog = await fetch("/api/catalog").then((res) => res.json());
+  const products = catalog.products ?? [];
 
-  // TODO: заменить на настоящий clientId, когда появятся сессии — Этап 10
-  mountQuestionPanel(document.getElementById("question-panel"), "local-test-client");
+  function syncScene(scene, skus) {
+    const fresh = [];
+    for (const sku of skus) {
+      if (get(sku)) continue;
+      const product = products.find((item) => item.sku === sku);
+      if (!product) continue;
+      fresh.push(product);
+    }
+    if (fresh.length === 0) return;
+    return placeProducts(scene, fresh);
+  }
 
   const canvas = document.getElementById("scene-canvas");
   const world = await initWorld();
@@ -133,9 +143,20 @@ async function main() {
   });
 
   createFloor(world);
-  await placeProducts(scene, catalog.products);
+
+  // TODO: заменить на настоящий clientId, когда появятся сессии — Этап 10
+  const clientId = "local-test-client";
+  const initialSkus = await fetch(`/api/dialog/scene?clientId=${clientId}`)
+    .then((res) => res.json())
+    .then((data) => data.skus);
+  await syncScene(scene, initialSkus);
 
   initDragControls({ camera, canvas, controls });
+
+  mountQuestionPanel(document.getElementById("question-panel"), clientId, async () => {
+    const { skus } = await fetch(`/api/dialog/scene?clientId=${clientId}`).then((res) => res.json());
+    await syncScene(scene, skus);
+  });
 }
 
 main().catch((err) => {
