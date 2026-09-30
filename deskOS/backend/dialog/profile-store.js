@@ -19,7 +19,9 @@ function defaultProfile(clientId) {
     scenario: null,
     status: "in_progress",
     fields: {},
-    needs: []
+    needs: [],
+    confirmedNeeds: [],
+    rejectedNeeds: []
   };
 }
 

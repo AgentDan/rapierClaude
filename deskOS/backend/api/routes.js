@@ -5,6 +5,7 @@ import { getNextQuestion } from "../dialog/engine/question-engine.js";
 import { computeNeeds } from "../dialog/engine/inference-engine.js";
 import { runMatching } from "../dialog/engine/matching.js";
 import { computeScenePlan } from "../dialog/engine/scene-plan.js";
+import { getPendingConfirmations } from "../dialog/engine/confirmation-engine.js";
 
 const router = Router();
 
@@ -24,7 +25,7 @@ router.get("/dialog/next", (req, res) => {
 
   const questionnaire = readQuestionnaire();
   const profile = loadProfile(clientId);
-  const next = getNextQuestion(questionnaire, profile);
+  const next = getNextQuestion(questionnaire, profile, readCatalog());
   res.json({ question: next ? next.question : null });
 });
 
@@ -35,6 +36,29 @@ router.post("/dialog/answer", (req, res) => {
   }
 
   const questionnaire = readQuestionnaire();
+  const catalog = readCatalog();
+
+  if (typeof questionId === "string" && questionId.startsWith("confirm_")) {
+    const profile = loadProfile(clientId);
+    const needId = questionId.slice("confirm_".length);
+    const pending = getPendingConfirmations(profile);
+    const need = pending.find((n) => n.id === needId);
+    if (!need) return res.status(404).json({ error: "unknown question" });
+
+    if (optionId === "keep") {
+      profile.confirmedNeeds = [...new Set([...(profile.confirmedNeeds ?? []), needId])];
+    } else if (optionId === "reject") {
+      profile.rejectedNeeds = [...new Set([...(profile.rejectedNeeds ?? []), needId])];
+      profile.needs = computeNeeds(questionnaire, profile);
+      profile.needs = runMatching(catalog, profile.needs);
+    } else {
+      return res.status(400).json({ error: "unknown option" });
+    }
+
+    saveProfile(profile);
+    return res.json({ ok: true });
+  }
+
   const question = (questionnaire.draft.questions ?? []).find((q) => q.id === questionId);
   if (!question) {
     return res.status(404).json({ error: "unknown question" });

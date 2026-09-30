@@ -2,7 +2,7 @@ import * as THREE from "three";
 import { initScene } from "./renderer/scene.js";
 import { RAPIER, initWorld, step } from "./physics/world.js";
 import { createBodyFromCatalogItem, mmToM, framePartsForItem, getWorldTopY } from "./physics/bodies.js";
-import { register, get } from "./physics/registry.js";
+import { register, get, all, unregister } from "./physics/registry.js";
 import { syncMeshes } from "./physics/sync.js";
 import { initDragControls } from "./interaction/drag-controls.js";
 import { loadCatalogModel } from "./renderer/load-model.js";
@@ -121,6 +121,15 @@ async function main() {
   const products = catalog.products ?? [];
 
   function syncScene(scene, skus) {
+    const target = new Set(skus);
+    for (const [id, entry] of all()) {
+      if (id === "floor") continue;
+      if (target.has(id)) continue;
+      if (entry.rigidBody) world.removeRigidBody(entry.rigidBody);
+      if (entry.mesh) scene.remove(entry.mesh);
+      unregister(id);
+    }
+
     const fresh = [];
     for (const sku of skus) {
       if (get(sku)) continue;

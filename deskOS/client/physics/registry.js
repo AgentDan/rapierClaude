@@ -14,4 +14,10 @@ function all() {
   return registry;
 }
 
-export { register, get, all };
+function unregister(id) {
+  const entry = registry.get(id);
+  registry.delete(id);
+  return entry ?? null;
+}
+
+export { register, get, all, unregister };

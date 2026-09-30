@@ -22,11 +22,15 @@ function computeNeeds(questionnaire, profile) {
     }
   }
 
-  return [...byNeed.entries()].map(([id, confidence]) => ({
-    id,
-    confidence,
-    resolvedSku: previousSku.get(id) ?? null
-  }));
+  const rejected = new Set(profile?.rejectedNeeds ?? []);
+
+  return [...byNeed.entries()]
+    .filter(([id]) => !rejected.has(id))
+    .map(([id, confidence]) => ({
+      id,
+      confidence,
+      resolvedSku: previousSku.get(id) ?? null
+    }));
 }
 
 export { computeNeeds };

@@ -123,6 +123,56 @@ test("getNextQuestion returns null when every phase is exhausted", () => {
   assert.equal(next, null);
 });
 
+function withConfirmation(source) {
+  const draft = source.draft;
+  return {
+    draft: {
+      ...draft,
+      phases: [...draft.phases, { id: "confirmation", order: 3, name: "Подтверждение" }]
+    }
+  };
+}
+
+function answeredThroughNeeds() {
+  return {
+    ...answered("q_work_type", "coding"),
+    ...answered("q_desk_width", "narrow"),
+    ...answered("q_back_pain", "yes")
+  };
+}
+
+const confirmationCatalog = {
+  draft: {
+    products: [{ sku: "DESK-TOP-1800", name: "Desk top 1800x800" }]
+  }
+};
+
+test("getNextQuestion asks to confirm a medium-confidence resolved need", () => {
+  const next = getNextQuestion(
+    withConfirmation(questionnaire()),
+    profile({
+      fields: answeredThroughNeeds(),
+      needs: [{ id: "desk_top_wide", confidence: "medium", resolvedSku: "DESK-TOP-1800" }]
+    }),
+    confirmationCatalog
+  );
+  assert.equal(next.phase, "confirmation");
+  assert.equal(next.question.id, "confirm_desk_top_wide");
+});
+
+test("getNextQuestion returns null when that need is already confirmed", () => {
+  const next = getNextQuestion(
+    withConfirmation(questionnaire()),
+    profile({
+      fields: answeredThroughNeeds(),
+      needs: [{ id: "desk_top_wide", confidence: "medium", resolvedSku: "DESK-TOP-1800" }],
+      confirmedNeeds: ["desk_top_wide"]
+    }),
+    confirmationCatalog
+  );
+  assert.equal(next, null);
+});
+
 test("question is not eligible when scenario is set and not in appliesToScenarios", () => {
   const eligible = getEligibleQuestions(
     questionnaire(),
